@@ -6,10 +6,12 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import javax.management.InvalidAttributeValueException;
 
@@ -26,7 +28,7 @@ public class Service {
 	}
 
 	public List<EmployeesCoWorked> findMostCoWorked(String fileName) throws InvalidAttributeValueException {
-		Map<Long, List<Employee>> employeesInProj = readFile(fileName);
+		Map<Long, Set<Employee>> employeesInProj = readFile(fileName);
 		chooseDateFormat();
 		
 		List<EmployeesCoWorked> res = findEmployeesCoWorked(employeesInProj);
@@ -34,9 +36,9 @@ public class Service {
 		return res;
 	}
 
-	private Map<Long, List<Employee>> readFile(String fileName) throws InvalidAttributeValueException {
+	private Map<Long, Set<Employee>> readFile(String fileName) throws InvalidAttributeValueException {
 
-		Map<Long, List<Employee>> result = new HashMap<>();
+		Map<Long, Set<Employee>> result = new HashMap<>();
 
 		try (Scanner scan = new Scanner(new File(fileName))) {
 			String line = null;
@@ -48,9 +50,12 @@ public class Service {
 				DateUtils.validateDateString(empl.getDateFrom());
 				DateUtils.validateDateString(empl.getDateTo());
 				if (result.containsKey(empl.getProjectId())) {
-					result.get(empl.getProjectId()).add(empl);
+					boolean added = result.get(empl.getProjectId()).add(empl);
+					if(!added) {
+						throw new RuntimeException("Employee can be in file once for a project");
+					}
 				} else {
-					result.put(empl.getProjectId(), new LinkedList<>(Arrays.asList(empl)));
+					result.put(empl.getProjectId(), new HashSet<>(Arrays.asList(empl)));
 				}
 			}
 		} catch (NumberFormatException e) {
@@ -62,13 +67,13 @@ public class Service {
 		return result;
 	}
 
-	private List<EmployeesCoWorked> findEmployeesCoWorked(Map<Long, List<Employee>> employeesByProject) {
+	private List<EmployeesCoWorked> findEmployeesCoWorked(Map<Long, Set<Employee>> employeesByProject) {
 		List<EmployeesCoWorked> result = new LinkedList<>();
 		
 		long daysMost = -1L;
 		
-		for(Map.Entry<Long, List<Employee>> entry : employeesByProject.entrySet()) {
-			List<Employee> list = employeesByProject.get(entry.getKey());
+		for(Map.Entry<Long, Set<Employee>> entry : employeesByProject.entrySet()) {
+			Set<Employee> list = employeesByProject.get(entry.getKey());
 			Employee[] array = list.toArray(new Employee[list.size()]);
 			
 			for(int i = 0; i < array.length - 1; ++i) {
@@ -130,4 +135,3 @@ public class Service {
 		
 	}
 }
-
