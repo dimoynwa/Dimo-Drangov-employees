@@ -54,13 +54,13 @@ public class Employee {
 	
 	@Override
 	public int hashCode() {
-		return employeeId.hashCode();
+		return (employeeId + " " + projectId).hashCode();
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
 		if(obj.getClass() != this.getClass())
 			return false;
-		return employeeId.equals(((Employee)obj).employeeId);
+		return employeeId.equals(((Employee)obj).employeeId) && projectId.equals(((Employee)obj).projectId);
 	}
 }
